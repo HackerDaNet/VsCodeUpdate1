@@ -1,0 +1,193 @@
+body{
+    background-color: #ffffff;
+    color: #000000;
+    line-height: 1.6; /* Define o espaçamento entre as linhas */
+}
+
+
+
+/* Estiliza o cabeçalho */
+header{
+    display: flex;
+    justify-content: space-between; /* Espaça os itens do cabeçalho */
+    align-items: center; /* Alinha os itens do cabeçalho verticalmente */
+    padding: 20px 8%; /* Adiciona espaçamento interno ao cabeçalho */
+    text-align: center;
+    background-color: #352858; /* Cor de fundo do cabeçalho */
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.4); /* Adiciona uma sombra ao cabeçalho */
+    position: sticky; /* Faz com que o cabeçalho fique fixo no topo da página */
+    top: 0; /* Define a posição do cabeçalho no topo da página */
+    z-index: 1000; /* Garante que o cabeçalho fique acima de outros elementos */
+}
+
+.Logotipo{
+    font-size: 45px; /* Tamanho da fonte do logotipo */
+    font-weight: 700; /* Deixa o texto do logotipo em negrito */
+    color: #ffffff; /* Cor do texto do logotipo */
+    letter-spacing: 6px; /* Espaçamento entre as letras do logotipo */
+    text-decoration: none; /* Remove a decoração de link do logotipo */
+}
+
+.Logotipo span{
+    color: #59a105; /* Cor de destaque para parte do logotipo */
+}
+
+nav ul{
+    list-style: none; /* Remove os marcadores da lista de navegação */
+    display: flex; /* Exibe os itens de navegação em linha */
+    gap: 20px; /* Adiciona um espaço entre os itens de navegação */
+}
+
+nav ul li{
+    margin-left: 30px; /* Adiciona um espaço à esquerda de cada item de navegação */
+    color: #f1ecec; /* Cor do texto dos itens de navegação */
+    font-weight: 500; /* Define o peso da fonte dos itens de navegação */
+    transition: all 0.3s ease; /* Adiciona uma transição suave para mudanças de estilo */
+}
+
+nav ul li a{
+    text-decoration: none; /* Remove a decoração de link dos itens de navegação */
+    color: inherit; /* Herda a cor do texto dos itens de navegação */
+    font-weight: 500; /* Define o peso da fonte dos links de navegação */
+    transition: all 0.8s ease; /* Adiciona uma transição suave para mudanças de estilo */
+    text-transform: uppercase; /* Transforma o texto dos links de navegação para maiúsculas */
+    letter-spacing: 2px; /* Adiciona espaçamento entre as letras dos links de navegação */
+}
+
+nav ul li a:hover{
+    color: #ff0000; /* Cor destaque para os links quando o mouse passar por cima */
+    font-weight: 700; /* Deixa os links em negrito ao passar o mouse */
+}
+
+.secao-principal{
+    display: flex; /* Exibe os elementos da seção principal em linha */
+    align-items: center; /* Alinha os elementos da seção principal verticalmente */
+    justify-content: space-between; /* Espaça os elementos da seção principal */
+    padding: 80px 8%; /* Adiciona espaçamento interno à seção principal */
+    min-height: 80vh; /* Define a altura mínima da seção principal */
+}
+
+.apresentacao{
+    max-width: 600px; /* Define a largura máxima do texto principal */
+}
+
+.apresentacao .saudacao{
+    font-size: 30px; /* Tamanho da fonte da saudação */
+    color: #0400ff; /* Cor da saudação */
+    font-weight: 600; /* Define o peso da fonte da saudação */
+    margin-bottom: 10px; /* Adiciona um espaço abaixo da saudação */
+}
+
+.apresentacao h1{
+    font-size: 60px; /* Tamanho da fonte do título principal */
+    margin-bottom: 15px; /* Adiciona um espaço abaixo do título principal */
+}
+
+.apresentacao h1 span{
+    color: #4c00ff; /* Cor de destaque para o nome na apresentação */
+}
+
+.apresentacao p{
+    font-size: 18px; /* Tamanho da fonte do parágrafo de apresentação */
+    color: #ffffff; /* Cor do texto do parágrafo de apresentação */
+    margin-bottom: 30px; /* Adiciona um espaço abaixo do parágrafo de apresentação */
+}
+
+.grupo-botoes{
+    padding: 12px 30px; /* Adiciona espaçamento interno aos botões */
+    display: flex; /* Exibe os botões em linha */
+    gap: 20px; /* Adiciona espaço entre os botões */
+}
+
+.botao{
+    padding: 12px 30px; /* Espaçamento interno dos botões */
+    background-color: #36343446; /* Cor de fundo dos botões */
+    color: #f1efef; /* Cor do texto dos botões */
+    border: none; /* Remove a borda dos botões */
+    border-radius: 5px; /* Bordas arredondadas */
+    font-size: 16px; /* Tamanho da fonte dos botões */
+    font-weight: bold; /* Peso da fonte */
+    cursor: pointer; /* Cursor para indicar que os botões são clicáveis */
+    transition: all 0.8s ease; /* Transição suave para mudanças de estilo */
+    text-transform: uppercase; /* Texto em maiúsculas */
+    letter-spacing: 2px; /* Espaçamento entre letras */
+    text-decoration: none; /* Remove decoração de link */
+    display: inline-block; /* Exibe os botões como elementos em linha */
+}
+
+.botao-contratar{
+    background-color: #494646; /* Cor de fundo do botão "Contratar" */
+    color: #ffffff; /* Cor do texto do botão "Contratar" */
+}
+
+.botao-contratar:hover{
+    background-color: #ff0000; /* Cor de fundo ao passar o mouse */
+    color: #ffffff; /* Cor do texto ao passar o mouse */
+}
+
+.botao-trabalhos{
+    background-color: #494646; /* Cor de fundo do botão de trabalhos */
+    color: #ffffff; /* Cor do texto do botão de trabalhos */
+}
+
+.botao-trabalhos:hover{
+    background-color: #ff0000; /* Cor de fundo ao passar o mouse */
+    color: #ffffff; /* Cor do texto ao passar o mouse */
+}
+
+.area-imagem{
+width: 400px; /* Define a largura máxima da área de imagem */
+height: 400px; /* Define a altura mínima da área de imagem */
+position: relative; /* Define a posição como relativa para posicionamento absoluto interno */
+}
+
+.moldura-circular{
+    background-color: #ffffff; /* Cor de fundo da moldura circular */
+    box-shadow: 10px 10px 10px 5px rgba(0, 0, 0, 0.4); /* Adiciona uma sombra à moldura circular */
+    width: 100%; /* Define a largura da moldura circular para ocupar toda a largura da área de imagem */
+    height: 100%; /* Define a altura da moldura circular para ocupar toda a altura da área de imagem */
+    border-radius: 50%; /* Adiciona bordas arredondadas para criar uma forma circular */
+    overflow: hidden; /* Oculta qualquer parte da imagem que ultrapasse os limites da moldura circular */
+    display: flex; /* Exibe a moldura circular como um contêiner flexível */
+    align-items: center; /* Alinha a imagem verticalmente no centro da moldura circular */
+    justify-content: center; /* Alinha a imagem horizontalmente no centro da moldura circular */
+    border: 8px solid #000000; /* Adiciona uma borda sólida à moldura circular */
+
+}
+
+footer{
+background-color: #006494;
+padding: 40px 8%;
+text-align: center;
+margin-top: 50px;
+}
+
+.conteudo-rodape{
+  display: flex;
+ flex-direction: column;
+ align-items: center;
+ gap: 15px;
+}
+
+.navegacao-rodape{
+  margin: 15px 0;
+}
+.navegacao-rodape a{
+  color: #e8f1f2;
+  text-decoration: none;
+  margin: 0 15px;
+  font-size: 17px; 
+}
+
+.navegacao-rodape a:hover{
+  color: #ff0000;
+  
+}
+
+p{
+    font-size: 20px;
+}
+
+li{
+    font-size: 25px;
+}

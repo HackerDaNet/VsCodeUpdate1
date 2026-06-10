@@ -1,0 +1,16 @@
+*{
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+
+
+}
+
+
+.Container{
+    max-width: 1080px;
+    margin: 99px auto;
+    padding: 80px;
+    background-color: #bd6c6c;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+}

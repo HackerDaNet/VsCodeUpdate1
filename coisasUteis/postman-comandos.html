@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Comandos do Postman</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #07111f;
+      --panel: #0f172a;
+      --panel-2: #111827;
+      --line: #1f2937;
+      --text: #eff6ff;
+      --muted: #cbd5e1;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --success: #22c55e;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.10), transparent 22%),
+        linear-gradient(135deg, #020617 0%, #07111f 45%, #111827 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .page { width: min(1200px, calc(100vw - 24px)); margin: 0 auto; padding: 24px 0 48px; }
+    header { display: grid; gap: 8px; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 2.8rem); }
+    p { margin: 0; color: var(--muted); line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; }
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 24px;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35);
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+    .label { font-weight: 700; margin-bottom: 8px; display: block; color: #dbeafe; }
+    textarea, input, select {
+      width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #020617; color: var(--text); padding: 12px 14px; font-size: 1rem;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    button {
+      border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 700; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #02111f;
+    }
+    .ghost { background: #111827; color: var(--text); border: 1px solid var(--line); }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.28); border-radius: 999px; padding: 8px 10px; color: #dbeafe; cursor: pointer; font-size: 0.95rem;
+    }
+    .tab-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .tab-btn {
+      border-radius: 999px; border: 1px solid var(--line); background: #111827; color: var(--text); padding: 8px 12px; cursor: pointer; font-weight: 700;
+    }
+    .tab-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #02111f; }
+    .guide-box { border: 1px dashed rgba(148,163,184,0.35); border-radius: 18px; padding: 12px; background: rgba(15,23,42,0.55); color: var(--muted); }
+    .mini-grid { display: grid; gap: 10px; }
+    .mini-card { border: 1px solid rgba(148,163,184,0.18); border-radius: 18px; background: rgba(2,6,23,0.5); padding: 10px; }
+    .small-note { color: #bfdbfe; font-size: 0.95rem; }
+    .result-card { display: grid; gap: 12px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 7px 10px; border-radius: 999px; background: rgba(34,197,94,0.10); border: 1px solid rgba(34,197,94,0.25); color: #bbf7d0; font-weight: 700; font-size: .95rem;
+    }
+    pre {
+      white-space: pre-wrap; word-break: break-word; border-radius: 18px; background: linear-gradient(180deg, #020617, #111827); border: 1px solid var(--line); padding: 14px; color: #e2e8f0; font-family: Consolas, 'Courier New', monospace; font-size: 0.95rem;
+    }
+    .small { color: var(--muted); font-size: 0.95rem; }
+    .kbd { color: #bfdbfe; font-weight: 700; }
+    .examples { display: grid; gap: 8px; }
+    .examples button { justify-content: left; text-align: left; width: 100%; background: #111827; color: var(--text); border: 1px solid var(--line); }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>Gerador de comandos do Postman</h1>
+      <p>Digite o que você quer fazer. A página transforma a intenção em exemplos prontos de endpoint, método e corpo JSON para testar no Postman.</p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <div class="tab-row">
+          <button class="tab-btn active" data-tab="use">Como usar</button>
+          <button class="tab-btn" data-tab="fast">Métodos rápidos</button>
+          <button class="tab-btn" data-tab="h2">H2 / SQL</button>
+        </div>
+
+        <div class="guide-box" id="tab-use">
+          1. Digite uma frase curta como <strong>GET /selecoes</strong> ou <strong>deletar seleção 1</strong>.<br>
+          2. Clique em <strong>Gerar comandos</strong> para ver o método, o endpoint e o curl.<br>
+          3. Use os atalhos ou o botão <strong>Gerar só nomes</strong> para montar rapidamente apenas os nomes das rotas.
+        </div>
+
+        <div class="guide-box" id="tab-fast" style="display:none;">
+          Os atalhos abaixo são os mais usados: GET, POST, PUT, DELETE, histórico e mais-escaladas. Eles ficam prontos para você copiar e testar no Postman.
+        </div>
+
+        <div class="guide-box" id="tab-h2" style="display:none;">
+          Você também pode usar o comando H2: <strong>SCRIPT TO 'script.sql';</strong> ou <strong>RUNSCRIPT FROM 'script.sql';</strong> como exemplo de exportação/importação.
+        </div>
+
+        <label class="label" for="requestInput" style="margin-top: 12px;">Descreva o que você quer testar</label>
+        <textarea id="requestInput" placeholder="Ex.: quero um GET de selecoes, um POST para criar uma seleção, ou um GET de partidas historico entre 2026-06-01 e 2026-06-30."></textarea>
+        <div class="row">
+          <button id="generateBtn" type="button">Gerar comandos</button>
+          <button id="generateNamesBtn" class="ghost" type="button">Gerar só nomes</button>
+          <button id="clearBtn" class="ghost" type="button">Limpar</button>
+        </div>
+
+        <div class="chip-row" id="quickChips"></div>
+
+        <div class="mini-grid" style="margin-top: 12px;">
+          <div class="mini-card">
+            <div class="label">Geração automática</div>
+            <select id="autoPresetSelect">
+              <option value="GET /selecoes">GET /selecoes</option>
+              <option value="GET /selecoes/grupo">GET /selecoes/grupo</option>
+              <option value="GET /selecoes/limites">GET /selecoes/limites</option>
+              <option value="GET /partidas">GET /partidas</option>
+              <option value="GET /partidas/historico?dataInicial=2026-06-01&dataFinal=2026-06-30">GET /partidas/historico</option>
+              <option value="GET /partidas/mais-escaladas?dataInicial=2026-06-01&dataFinal=2026-06-30">GET /partidas/mais-escaladas</option>
+              <option value="POST /selecoes">POST /selecoes</option>
+              <option value="PUT /selecoes/1">PUT /selecoes/1</option>
+              <option value="DELETE /selecoes/1">DELETE /selecoes/1</option>
+            </select>
+            <div class="row">
+              <button id="autoFillBtn" type="button">Preencher nome</button>
+              <button id="autoFillOnlyBtn" class="ghost" type="button">Só nome</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="examples" style="margin-top: 14px;">
+          <button class="ghost" data-example="GET /selecoes">Exemplo: GET /selecoes</button>
+          <button class="ghost" data-example="GET /selecoes/grupo">Exemplo: GET /selecoes/grupo</button>
+          <button class="ghost" data-example="GET /selecoes/limites">Exemplo: GET /selecoes/limites</button>
+          <button class="ghost" data-example="GET /partidas">Exemplo: GET /partidas</button>
+          <button class="ghost" data-example="GET /partidas/historico?dataInicial=2026-06-01&dataFinal=2026-06-30">Exemplo: GET /partidas/historico?dataInicial=2026-06-01&dataFinal=2026-06-30</button>
+          <button class="ghost" data-example="GET /partidas/mais-escaladas?dataInicial=2026-06-01&dataFinal=2026-06-30">Exemplo: GET /partidas/mais-escaladas?dataInicial=2026-06-01&dataFinal=2026-06-30</button>
+          <button class="ghost" data-example="POST /selecoes com nome, sigla e status">Exemplo: POST /selecoes</button>
+          <button class="ghost" data-example="PUT /selecoes/1 atualizar nome e sigla">Exemplo: PUT /selecoes/1</button>
+          <button class="ghost" data-example="DELETE /selecoes/1 remover seleção">Exemplo: DELETE /selecoes/1</button>
+        </div>
+      </article>
+
+      <article class="card result-card" id="resultPanel">
+        <div class="small-note">Métodos rápidos: <strong>GET</strong>, <strong>POST</strong>, <strong>PUT</strong>, <strong>DELETE</strong>, histórico e mais-escaladas.</div>
+        <div class="badge">Resultado pronto para o Postman</div>
+        <div>
+          <div class="label">Método</div>
+          <pre id="methodBox">Selecione ou digite um comando.</pre>
+        </div>
+        <div>
+          <div class="label">Endpoint</div>
+          <pre id="endpointBox">/exemplo</pre>
+        </div>
+        <div>
+          <div class="label">Body JSON</div>
+          <pre id="bodyBox">{\n  "exemplo": "preencha a descrição acima"\n}</pre>
+        </div>
+        <div>
+          <div class="label">Exemplo de chamada no Postman</div>
+          <pre id="curlBox">curl -X GET "https://api.exemplo.com/selecoes"</pre>
+        </div>
+        <div class="mini-card">
+          <div class="label">Comando H2</div>
+          <pre id="h2Box">SCRIPT TO 'script.sql';</pre>
+          <p class="small-note">Exemplo: use <strong>SCRIPT TO 'script.sql';</strong> para exportar o banco H2.</p>
+        </div>
+        <p class="small">Dica: você pode escrever frases como “quero um GET /selecoes” ou “deletar seleção 1”.</p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const requestInput = document.getElementById('requestInput');
+    const resultPanel = document.getElementById('resultPanel');
+    const methodBox = document.getElementById('methodBox');
+    const endpointBox = document.getElementById('endpointBox');
+    const bodyBox = document.getElementById('bodyBox');
+    const curlBox = document.getElementById('curlBox');
+    const h2Box = document.getElementById('h2Box');
+    const quickChips = document.getElementById('quickChips');
+    const autoPresetSelect = document.getElementById('autoPresetSelect');
+
+    const presets = [
+      { label: 'GET /selecoes', text: 'quero um GET /selecoes' },
+      { label: 'GET /selecoes/grupo', text: 'quero um GET /selecoes/grupo' },
+      { label: 'GET /selecoes/limites', text: 'quero um GET /selecoes/limites' },
+      { label: 'GET /partidas', text: 'quero um GET /partidas' },
+      { label: 'GET /partidas/historico', text: 'quero um GET /partidas/historico com dataInicial 2026-06-01 e dataFinal 2026-06-30' },
+      { label: 'GET /partidas/mais-escaladas', text: 'quero um GET /partidas/mais-escaladas com dataInicial 2026-06-01 e dataFinal 2026-06-30' },
+      { label: 'POST /selecoes', text: 'criar uma seleção com nome, sigla e status' },
+      { label: 'PUT /selecoes/1', text: 'atualizar a seleção 1' },
+      { label: 'DELETE /selecoes/1', text: 'deletar a seleção 1' }
+    ];
+
+    function setChips() {
+      quickChips.innerHTML = '';
+      presets.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = item.label;
+        btn.type = 'button';
+        btn.addEventListener('click', () => {
+          requestInput.value = item.text;
+          generate();
+        });
+        quickChips.appendChild(btn);
+      });
+    }
+
+    function detectRequest(text) {
+      const lower = text.toLowerCase();
+      const hasGet = /\bget\b|listar|buscar|consultar|mostrar/i.test(lower);
+      const hasPost = /\bpost\b|criar|adicionar|inserir|novo/i.test(lower);
+      const hasPut = /\bput\b|atualizar|alterar|editar|modificar/i.test(lower);
+      const hasDelete = /\bdelete\b|remover|excluir|apagar/i.test(lower);
+
+      let method = 'GET';
+      if (hasPost) method = 'POST';
+      else if (hasPut) method = 'PUT';
+      else if (hasDelete) method = 'DELETE';
+
+      let endpoint = '/selecoes';
+      if (/partidas\/historico/i.test(lower) || /historico/i.test(lower)) endpoint = '/partidas/historico?dataInicial=2026-06-01&dataFinal=2026-06-30';
+      else if (/partidas\/mais-escaladas/i.test(lower) || /mais-escaladas/i.test(lower)) endpoint = '/partidas/mais-escaladas?dataInicial=2026-06-01&dataFinal=2026-06-30';
+      else if (/partidas/i.test(lower)) endpoint = '/partidas';
+      else if (/selecoes\/grupo/i.test(lower) || /grupo/i.test(lower)) endpoint = '/selecoes/grupo';
+      else if (/selecoes\/limites/i.test(lower) || /limites/i.test(lower)) endpoint = '/selecoes/limites';
+      else if (/selecoes/i.test(lower)) endpoint = '/selecoes';
+
+      if (/\/[^\s]+\/\d+/i.test(text)) endpoint = text.match(/\/[^\s]+\/\d+/i)?.[0] || endpoint;
+      if (/\/[^\s]+\/[a-z0-9-]+/i.test(text) && !/selecoes|partidas/i.test(text)) endpoint = text.match(/\/[^\s]+\/[a-z0-9-]+/i)?.[0] || endpoint;
+
+      let body = '{\n  "exemplo": "adicione os campos que você quiser"\n}';
+      if (method === 'POST' || method === 'PUT') {
+        body = '{\n  "nome": "Nome da seleção",\n  "sigla": "SEL",\n  "status": "ATIVO"\n}';
+      }
+      if (/partidas\/historico|historico/i.test(lower)) {
+        body = '{\n  "dataInicial": "2026-06-01",\n  "dataFinal": "2026-06-30"\n}';
+      }
+      if (/partidas\/mais-escaladas|mais-escaladas/i.test(lower)) {
+        body = '{\n  "dataInicial": "2026-06-01",\n  "dataFinal": "2026-06-30"\n}';
+      }
+      if (/delete|remover|excluir|apagar/i.test(lower)) {
+        body = '{\n  "confirmacao": true\n}';
+      }
+
+      const baseUrl = 'https://api.exemplo.com';
+      const bodyJson = (method === 'POST' || method === 'PUT')
+        ? ` -H "Content-Type: application/json" -d '${JSON.stringify(JSON.parse(body), null, 2).replace(/'/g, "\\'")}'`
+        : '';
+      const curl = `curl -X ${method} "${baseUrl}${endpoint}"${bodyJson}`;
+
+      return { method, endpoint, body, curl };
+    }
+
+    function generate() {
+      const text = requestInput.value.trim();
+      const result = detectRequest(text || 'GET /selecoes');
+      methodBox.textContent = result.method;
+      endpointBox.textContent = result.endpoint;
+      bodyBox.textContent = result.body;
+      curlBox.textContent = result.curl;
+      h2Box.textContent = result.method === 'GET' ? "SCRIPT TO 'script.sql';" : "SCRIPT TO 'script.sql';\nRUNSCRIPT FROM 'script.sql';";
+    }
+
+    function fillOnlyName(prefix = 'GET /selecoes') {
+      const value = prefix.trim();
+      requestInput.value = value;
+      generate();
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', generate);
+    document.getElementById('generateNamesBtn').addEventListener('click', () => fillOnlyName(requestInput.value || 'GET /selecoes'));
+    document.getElementById('autoFillBtn').addEventListener('click', () => {
+      requestInput.value = autoPresetSelect.value;
+      generate();
+    });
+    document.getElementById('autoFillOnlyBtn').addEventListener('click', () => fillOnlyName(autoPresetSelect.value));
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      requestInput.value = '';
+      generate();
+    });
+
+    document.querySelectorAll('[data-example]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        requestInput.value = btn.getAttribute('data-example');
+        generate();
+      });
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[id^="tab-"]').forEach(panel => panel.style.display = 'none');
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+      });
+    });
+
+    setChips();
+    generate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador Automático de Diagrama ER</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7fb;
+      color: #17212b;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.5rem 1rem 0.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+      color: white;
+    }
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+    }
+    header p {
+      margin: 0.75rem auto 1.2rem;
+      max-width: 780px;
+      line-height: 1.6;
+      opacity: 0.92;
+    }
+    .page {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 15px 40px rgba(15, 23, 42, 0.06);
+      padding: 1rem;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.15rem;
+      color: #0f172a;
+    }
+    .form-group {
+      display: grid;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 0.8rem 0.9rem;
+      font: inherit;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 0.9rem 1.25rem;
+      font-weight: 700;
+      color: white;
+      background: #2563eb;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      background: #1d4ed8;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .small-button {
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+    }
+    .diagram-panel {
+      min-height: 640px;
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 24%),
+                  radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 20%);
+      border: 1px solid rgba(15, 23, 42, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .diagram-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 1rem;
+      align-items: center;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255,255,255,0.83);
+    }
+    .diagram-toolbar span {
+      font-size: 0.95rem;
+      color: #334155;
+    }
+    .diagram-area {
+      flex: 1;
+      position: relative;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .notes {
+      font-size: 0.93rem;
+      color: #475569;
+      line-height: 1.65;
+    }
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gerador Automático de Diagrama ER</h1>
+    <p>Crie entidades, atributos e relacionamentos e veja o Diagrama de Entidade-Relacionamento desenhado automaticamente em SVG. Visualize cardinalidades, chaves primárias e conexões diretamente no navegador.</p>
+  </header>
+  <main class="page">
+    <section class="grid">
+      <article class="card">
+        <h2>1. Definir entidade</h2>
+        <div class="form-group">
+          <label for="entity-name">Nome da entidade</label>
+          <input id="entity-name" type="text" placeholder="Ex: Cliente" />
+        </div>
+        <div class="form-group">
+          <label for="entity-attributes">Atributos (separados por vírgula)</label>
+          <textarea id="entity-attributes" rows="4" placeholder="Ex: id:PK, nome, email, telefone"></textarea>
+        </div>
+        <button id="add-entity">Adicionar entidade</button>
+        <p class="notes">Use <strong>:PK</strong> para marcar chave primária. Ex: <code>id:PK</code></p>
+      </article>
+      <article class="card">
+        <h2>2. Definir relacionamento</h2>
+        <div class="form-group">
+          <label for="relation-name">Nome do relacionamento</label>
+          <input id="relation-name" type="text" placeholder="Ex: Compra" />
+        </div>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="entity-a">Entidade A</label>
+            <select id="entity-a"><option value="">Escolha uma entidade</option></select>
+          </div>
+          <div class="form-group">
+            <label for="entity-b">Entidade B</label>
+            <select id="entity-b"><option value="">Escolha uma entidade</option></select>
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="cardinality-a">Cardinalidade A</label>
+            <select id="cardinality-a">
+              <option value="1">1</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cardinality-b">Cardinalidade B</label>
+            <select id="cardinality-b">
+              <option value="1">1</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+        </div>
+        <button id="add-relation" class="small-button">Adicionar relacionamento</button>
+        <p class="notes">Use cardinalidades 1 e N para desenhar ligações do tipo 1:1, 1:N e N:M.</p>
+      </article>
+    </section>
+    <section class="card">
+      <h2>3. Importar código Java do IntelliJ</h2>
+      <div class="form-group">
+        <label for="java-code-input">Cole um trecho com @Entity / @ManyToOne / @OneToMany</label>
+        <textarea id="java-code-input" rows="10" placeholder="Exemplo: @Entity public class Convocacao { @Id private Long id; @ManyToOne private Selecao selecao; }"></textarea>
+      </div>
+      <button id="import-java-btn" class="small-button">Importar entidades e relacionamentos</button>
+      <p class="notes">O parser lê classes anotadas com <strong>@Entity</strong>, campos com <strong>@Id</strong>, <strong>@ManyToOne</strong>, <strong>@OneToMany</strong>, <strong>@OneToOne</strong> e <strong>@ManyToMany</strong> para montar o diagrama automaticamente.</p>
+    </section>
+    <section class="diagram-panel">
+      <div class="diagram-toolbar">
+        <button id="reset-diagram" class="small-button">Limpar tudo</button>
+        <span id="status-count">Entidades: 0 | Relacionamentos: 0</span>
+      </div>
+      <div class="diagram-area">
+        <svg id="diagram-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </section>
+  </main>
+  <script>
+    const entityName = document.getElementById('entity-name');
+    const entityAttributes = document.getElementById('entity-attributes');
+    const addEntityBtn = document.getElementById('add-entity');
+    const entityASelect = document.getElementById('entity-a');
+    const entityBSelect = document.getElementById('entity-b');
+    const relationName = document.getElementById('relation-name');
+    const cardinalityA = document.getElementById('cardinality-a');
+    const cardinalityB = document.getElementById('cardinality-b');
+    const addRelationBtn = document.getElementById('add-relation');
+    const importJavaBtn = document.getElementById('import-java-btn');
+    const javaCodeInput = document.getElementById('java-code-input');
+    const resetBtn = document.getElementById('reset-diagram');
+    const statusCount = document.getElementById('status-count');
+    const svg = document.getElementById('diagram-svg');
+
+    const entities = [];
+    const relationships = [];
+    let dragState = null;
+
+    function getSvgPoint(event) {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function handlePointerMove(event) {
+      if (!dragState) return;
+      const point = getSvgPoint(event);
+      if (dragState.type === 'entity') {
+        dragState.entity.x = point.x - dragState.offsetX;
+        dragState.entity.y = point.y - dragState.offsetY;
+        dragState.entity.layoutLocked = true;
+        renderDiagram();
+      } else if (dragState.type === 'label') {
+        if (dragState.target === 'cardA') {
+          dragState.relationship.cardAOffsetX = point.x - dragState.originX;
+          dragState.relationship.cardAOffsetY = point.y - dragState.originY;
+        } else if (dragState.target === 'cardB') {
+          dragState.relationship.cardBOffsetX = point.x - dragState.originX;
+          dragState.relationship.cardBOffsetY = point.y - dragState.originY;
+        } else if (dragState.target === 'relation') {
+          dragState.relationship.labelOffsetX = point.x - dragState.originX;
+          dragState.relationship.labelOffsetY = point.y - dragState.originY;
+        }
+        renderDiagram();
+      }
+    }
+
+    function stopDrag() {
+      dragState = null;
+    }
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopDrag);
+    window.addEventListener('pointercancel', stopDrag);
+
+    function parseAttributes(text) {
+      return text.split(',').map(item => item.trim()).filter(Boolean).map(attribute => {
+        const [name, flag] = attribute.split(':').map(item => item.trim());
+        return {
+          name,
+          isPrimary: flag && flag.toUpperCase() === 'PK'
+        };
+      });
+    }
+
+    function updateDropdowns() {
+      [entityASelect, entityBSelect].forEach(select => {
+        const current = select.value;
+        select.innerHTML = '<option value="">Escolha uma entidade</option>';
+        entities.forEach((entity, index) => {
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = entity.name;
+          select.appendChild(option);
+        });
+        select.value = current;
+      });
+    }
+
+    function updateStatus() {
+      statusCount.textContent = `Entidades: ${entities.length} | Relacionamentos: ${relationships.length}`;
+    }
+
+    function normalizeType(type) {
+      return String(type || '')
+        .replace(/\b(final|static|private|protected|public)\b/g, '')
+        .replace(/\bList<([^>]+)>/g, '$1')
+        .replace(/\bSet<([^>]+)>/g, '$1')
+        .replace(/\bCollection<([^>]+)>/g, '$1')
+        .replace(/\bMap<[^,]+,\s*([^>]+)>/g, '$1')
+        .replace(/\bOptional<([^>]+)>/g, '$1')
+        .replace(/\[\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function findMatchingBrace(code, openIndex) {
+      let depth = 0;
+      for (let i = openIndex; i < code.length; i++) {
+        if (code[i] === '{') depth += 1;
+        if (code[i] === '}') {
+          depth -= 1;
+          if (depth === 0) return i;
+        }
+      }
+      return -1;
+    }
+
+    function extractClassBlocks(code) {
+      const blocks = [];
+      const pattern = /(?:public\s+|protected\s+|private\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:extends\s+[A-Za-z_][A-Za-z0-9_<>\s.,]*)?(?:implements\s+[A-Za-z_][A-Za-z0-9_<>\s.,]*)?\{/g;
+      let match;
+      while ((match = pattern.exec(code)) !== null) {
+        const openIndex = match.index + match[0].lastIndexOf('{');
+        const closeIndex = findMatchingBrace(code, openIndex);
+        if (closeIndex === -1) continue;
+        const body = code.slice(openIndex + 1, closeIndex);
+        const linesBefore = code.slice(0, match.index).split('\n').filter(line => line.trim() !== '');
+        const annotationLines = [];
+        for (let i = linesBefore.length - 1; i >= 0; i--) {
+          const line = linesBefore[i].trim();
+          if (line.startsWith('@')) {
+            annotationLines.unshift(line);
+            continue;
+          }
+          break;
+        }
+        const declaration = `${annotationLines.join('\n')}\n${code.slice(match.index, openIndex)}`.trim();
+        blocks.push({ name: match[1], body, declaration, start: openIndex, end: closeIndex });
+      }
+      if (blocks.length === 0) {
+        const hasFieldLikeCode = /(?:private|protected|public)\s+(?:final\s+)?[A-Za-z_][A-Za-z0-9_<>,\[\]\s]*\s+[A-Za-z_][A-Za-z0-9_]*\s*(?:=.+)?;/g.test(code);
+        if (hasFieldLikeCode) {
+          blocks.push({
+            name: 'EntidadeImportada',
+            body: code,
+            declaration: 'Campo(s) importado(s)'
+          });
+        }
+      }
+      return blocks;
+    }
+
+    function parseJavaFields(body) {
+      const fields = [];
+      const fieldRegex = /((?:@\w+(?:\([^)]*\))?\s*)*)(?:private|protected|public)\s+(?:final\s+)?([A-Za-z_][A-Za-z0-9_<>,\[\]\s]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:=.+)?;/g;
+      let match;
+
+      while ((match = fieldRegex.exec(body)) !== null) {
+        const raw = match[0].replace(/\s+/g, ' ').trim();
+        const annotations = (match[1] || '').match(/@\w+(?:\([^)]*\))?/g) || [];
+        const type = normalizeType(match[2]);
+        const name = match[3];
+
+        fields.push({
+          name,
+          type,
+          annotations,
+          isPrimary: annotations.some(item => /@Id\b/i.test(item)),
+          isForeignKey: annotations.some(item => /@ManyToOne|@OneToOne|@OneToMany|@ManyToMany/i.test(item)),
+          raw
+        });
+      }
+
+      return fields;
+    }
+
+    function importJavaCode() {
+      const code = javaCodeInput.value.trim();
+      if (!code) {
+        alert('Cole um trecho de código Java antes de importar.');
+        return;
+      }
+
+      const classes = extractClassBlocks(code);
+      if (!classes.length) {
+        alert('Não encontrei classes Java com o padrão esperado.');
+        return;
+      }
+
+      classes.forEach(classBlock => {
+        const fields = parseJavaFields(classBlock.body);
+        const hasEntity = /@Entity/i.test(classBlock.declaration)
+          || /@Table\(/i.test(classBlock.declaration)
+          || /@Id\b/i.test(classBlock.body)
+          || /@ManyToOne|@OneToMany|@OneToOne|@ManyToMany/i.test(classBlock.body);
+        if (!hasEntity) return;
+
+        const existing = entities.find(entity => entity.name.toLowerCase() === classBlock.name.toLowerCase());
+        if (!existing) {
+          entities.push({
+            name: classBlock.name,
+            attributes: fields.map(field => ({
+              name: field.name,
+              isPrimary: field.isPrimary || /@Id/i.test(field.raw),
+              isForeignKey: field.isForeignKey || /@ManyToOne|@OneToOne|@OneToMany|@ManyToMany/i.test(field.raw)
+            })),
+            x: 0,
+            y: 0,
+            layoutLocked: false
+          });
+        }
+      });
+
+      const primitiveTypes = new Set(['String','Long','Integer','Double','Float','Boolean','Byte','Short','Date','LocalDate','LocalDateTime','BigDecimal','BigInteger','UUID']);
+      classes.forEach(classBlock => {
+        const fields = parseJavaFields(classBlock.body);
+        fields.forEach(field => {
+          const type = normalizeType(field.type);
+          if (!type || primitiveTypes.has(type) || entities.some(entity => entity.name.toLowerCase() === type.toLowerCase())) return;
+          if (!entities.some(entity => entity.name.toLowerCase() === type.toLowerCase())) {
+            entities.push({ name: type, attributes: [{ name: 'id', isPrimary: true }], x: 0, y: 0, layoutLocked: false });
+          }
+        });
+      });
+
+      classes.forEach(classBlock => {
+        const fields = parseJavaFields(classBlock.body);
+        const currentEntity = entities.find(entity => entity.name.toLowerCase() === classBlock.name.toLowerCase());
+        if (!currentEntity) return;
+        fields.forEach(field => {
+          const relationType = field.raw.match(/@(ManyToOne|OneToMany|OneToOne|ManyToMany)/i);
+          const annotation = relationType ? relationType[1] : '';
+          const target = normalizeType(field.type);
+          if (!target || !/ManyToOne|OneToMany|OneToOne|ManyToMany/i.test(annotation)) return;
+
+          const targetIndex = entities.findIndex(entity => entity.name.toLowerCase() === target.toLowerCase());
+          if (targetIndex === -1) return;
+
+          const relationName = `${classBlock.name}_${field.name}`;
+          const exists = relationships.some(rel => rel.name === relationName && rel.from === entities.indexOf(currentEntity) && rel.to === targetIndex);
+          if (exists) return;
+
+          let cardA = '1';
+          let cardB = '1';
+          if (annotation === 'ManyToOne' || annotation === 'OneToOne') {
+            cardA = 'N';
+            cardB = '1';
+          } else if (annotation === 'OneToMany') {
+            cardA = '1';
+            cardB = 'N';
+          } else if (annotation === 'ManyToMany') {
+            cardA = 'N';
+            cardB = 'N';
+          }
+
+          relationships.push({
+            name: relationName,
+            from: entities.indexOf(currentEntity),
+            to: targetIndex,
+            cardA,
+            cardB,
+            cardAOffsetX: 0,
+            cardAOffsetY: 0,
+            cardBOffsetX: 0,
+            cardBOffsetY: 0,
+            labelOffsetX: 0,
+            labelOffsetY: 0
+          });
+        });
+      });
+
+      updateDropdowns();
+      updateStatus();
+      renderDiagram();
+      javaCodeInput.value = '';
+      alert(`Importação concluída: ${entities.length} entidade(s) e ${relationships.length} relacionamento(s) adicionados.`);
+    }
+
+    function addEntity() {
+      const name = entityName.value.trim();
+      const attrs = parseAttributes(entityAttributes.value);
+      if (!name) return;
+      if (entities.some(entity => entity.name.toLowerCase() === name.toLowerCase())) {
+        alert('Já existe uma entidade com este nome.');
+        return;
+      }
+      entities.push({ name, attributes: attrs, x: 0, y: 0, layoutLocked: false });
+      entityName.value = '';
+      entityAttributes.value = '';
+      updateDropdowns();
+      updateStatus();
+      renderDiagram();
+    }
+
+    function addRelationship() {
+      const name = relationName.value.trim();
+      const indexA = Number(entityASelect.value);
+      const indexB = Number(entityBSelect.value);
+      const cardA = cardinalityA.value;
+      const cardB = cardinalityB.value;
+      if (!name || isNaN(indexA) || isNaN(indexB) || indexA === indexB) {
+        alert('Preencha um nome e escolha duas entidades diferentes.');
+        return;
+      }
+      relationships.push({ name, from: indexA, to: indexB, cardA, cardB, cardAOffsetX: 0, cardAOffsetY: 0, cardBOffsetX: 0, cardBOffsetY: 0, labelOffsetX: 0, labelOffsetY: 0 });
+      relationName.value = '';
+      updateStatus();
+      renderDiagram();
+    }
+
+    function resetDiagram() {
+      if (!confirm('Deseja limpar todas as entidades e relacionamentos?')) return;
+      entities.length = 0;
+      relationships.length = 0;
+      updateDropdowns();
+      updateStatus();
+      renderDiagram();
+    }
+
+    function getEntityDimensions(entity, width = 280) {
+      const headerHeight = 48;
+      const rowHeight = 28;
+      const lineCount = Math.max(entity.attributes.length, 1);
+      return {
+        width,
+        height: headerHeight + lineCount * rowHeight + 20
+      };
+    }
+
+    function drawEntity(entity, x, y, width = 280, layer = svg) {
+      const headerHeight = 48;
+      const rowHeight = 28;
+      const { width: boxWidth, height } = getEntityDimensions(entity, width);
+      entity.x = x;
+      entity.y = y;
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('transform', `translate(${x}, ${y})`);
+      group.style.cursor = 'grab';
+      group.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        const point = getSvgPoint(event);
+        dragState = {
+          type: 'entity',
+          entity,
+          offsetX: point.x - x,
+          offsetY: point.y - y,
+          pointerId: event.pointerId
+        };
+        group.setPointerCapture(event.pointerId);
+        group.style.cursor = 'grabbing';
+      });
+      group.addEventListener('pointerup', () => { group.style.cursor = 'grab'; });
+      group.addEventListener('pointercancel', () => { group.style.cursor = 'grab'; });
+      const outer = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      outer.setAttribute('x', 0);
+      outer.setAttribute('y', 0);
+      outer.setAttribute('rx', 18);
+      outer.setAttribute('ry', 18);
+      outer.setAttribute('width', boxWidth);
+      outer.setAttribute('height', height);
+      outer.setAttribute('fill', '#ffffff');
+      outer.setAttribute('stroke', '#0f172a');
+      outer.setAttribute('stroke-width', 1.2);
+      outer.setAttribute('filter', 'drop-shadow(0 4px 12px rgba(15,23,42,.08))');
+      group.appendChild(outer);
+      const header = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      header.setAttribute('x', 0);
+      header.setAttribute('y', 0);
+      header.setAttribute('width', boxWidth);
+      header.setAttribute('height', headerHeight);
+      header.setAttribute('rx', 18);
+      header.setAttribute('ry', 18);
+      header.setAttribute('fill', '#0ea5e9');
+      header.setAttribute('opacity', 0.95);
+      group.appendChild(header);
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', boxWidth / 2);
+      title.setAttribute('y', headerHeight / 1.65);
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('fill', '#fff');
+      title.setAttribute('font-size', '16');
+      title.setAttribute('font-weight', '700');
+      title.textContent = entity.name;
+      group.appendChild(title);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', 0);
+      line.setAttribute('y1', headerHeight);
+      line.setAttribute('x2', boxWidth);
+      line.setAttribute('y2', headerHeight);
+      line.setAttribute('stroke', '#94a3b8');
+      line.setAttribute('stroke-width', 1);
+      group.appendChild(line);
+      entity.attributes.forEach((attribute, index) => {
+        const attrY = headerHeight + 16 + index * rowHeight;
+        const attrText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        attrText.setAttribute('x', 16);
+        attrText.setAttribute('y', attrY);
+        attrText.setAttribute('fill', '#0f172a');
+        attrText.setAttribute('font-size', '14');
+        const tags = [];
+        if (attribute.isPrimary) tags.push('PK');
+        if (attribute.isForeignKey) tags.push('FK');
+        attrText.textContent = attribute.name + (tags.length ? ` (${tags.join(' / ')})` : '');
+        group.appendChild(attrText);
+        if (attribute.isPrimary) {
+          const underline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          underline.setAttribute('x1', 14);
+          underline.setAttribute('x2', boxWidth - 14);
+          underline.setAttribute('y1', attrY + 4);
+          underline.setAttribute('y2', attrY + 4);
+          underline.setAttribute('stroke', '#0f172a');
+          underline.setAttribute('stroke-width', 1);
+          group.appendChild(underline);
+        }
+      });
+      layer.appendChild(group);
+      return { width: boxWidth, height };
+    }
+
+    function getBorderPoint(entity, x, y) {
+      const centerX = entity.x + entity.width / 2;
+      const centerY = entity.y + entity.height / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      if (dx === 0 && dy === 0) return { x: centerX, y: centerY };
+      const scaleX = (entity.width / 2) / Math.abs(dx || 1);
+      const scaleY = (entity.height / 2) / Math.abs(dy || 1);
+      const scale = Math.min(scaleX, scaleY);
+      return { x: centerX + dx * scale, y: centerY + dy * scale };
+    }
+
+    function drawRelationship(rel, source, target, layer = svg) {
+      const sourcePoint = getBorderPoint(source, target.x + target.width / 2, target.y + target.height / 2);
+      const targetPoint = getBorderPoint(target, source.x + source.width / 2, source.y + source.height / 2);
+      const dx = targetPoint.x - sourcePoint.x;
+      const dy = targetPoint.y - sourcePoint.y;
+      const angle = Math.atan2(dy, dx);
+      const midX = (sourcePoint.x + targetPoint.x) / 2;
+      const midY = (sourcePoint.y + targetPoint.y) / 2;
+      const boxSize = 86;
+      const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      const points = [
+        { x: midX, y: midY - boxSize / 2 },
+        { x: midX + boxSize / 2, y: midY },
+        { x: midX, y: midY + boxSize / 2 },
+        { x: midX - boxSize / 2, y: midY }
+      ].map(p => `${p.x},${p.y}`).join(' ');
+      diamond.setAttribute('points', points);
+      diamond.setAttribute('fill', '#f8fafc');
+      diamond.setAttribute('stroke', '#0f172a');
+      diamond.setAttribute('stroke-width', 1.4);
+      layer.appendChild(diamond);
+      function drawLink(from, to) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', from.x);
+        line.setAttribute('y1', from.y);
+        line.setAttribute('x2', to.x);
+        line.setAttribute('y2', to.y);
+        line.setAttribute('stroke', '#475569');
+        line.setAttribute('stroke-width', 1.7);
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('opacity', '0.9');
+        layer.appendChild(line);
+      }
+      const relationX = midX;
+      const relationY = midY;
+      const cardAX = relationX - 34 + (rel.cardAOffsetX || 0);
+      const cardAY = relationY - 2 + (rel.cardAOffsetY || 0);
+      const cardBX = relationX + 34 + (rel.cardBOffsetX || 0);
+      const cardBY = relationY - 2 + (rel.cardBOffsetY || 0);
+      const cardinalityTextA = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      cardinalityTextA.setAttribute('x', cardAX);
+      cardinalityTextA.setAttribute('y', cardAY - 2);
+      cardinalityTextA.setAttribute('fill', '#0f172a');
+      cardinalityTextA.setAttribute('font-size', '13');
+      cardinalityTextA.setAttribute('font-weight', '700');
+      cardinalityTextA.setAttribute('text-anchor', 'middle');
+      cardinalityTextA.style.cursor = 'grab';
+      cardinalityTextA.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        const point = getSvgPoint(event);
+        dragState = { type: 'label', target: 'cardA', relationship: rel, originX: point.x, originY: point.y };
+        cardinalityTextA.setPointerCapture(event.pointerId);
+      });
+      cardinalityTextA.setAttribute('dominant-baseline', 'middle');
+      cardinalityTextA.setAttribute('paint-order', 'stroke');
+      cardinalityTextA.setAttribute('stroke', '#f8fafc');
+      cardinalityTextA.setAttribute('stroke-width', '3');
+      cardinalityTextA.textContent = rel.cardA;
+      const cardinalityTextB = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      cardinalityTextB.setAttribute('x', cardBX);
+      cardinalityTextB.setAttribute('y', cardBY - 2);
+      cardinalityTextB.setAttribute('fill', '#0f172a');
+      cardinalityTextB.setAttribute('font-size', '13');
+      cardinalityTextB.setAttribute('font-weight', '700');
+      cardinalityTextB.setAttribute('text-anchor', 'middle');
+      cardinalityTextB.style.cursor = 'grab';
+      cardinalityTextB.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        const point = getSvgPoint(event);
+        dragState = { type: 'label', target: 'cardB', relationship: rel, originX: point.x, originY: point.y };
+        cardinalityTextB.setPointerCapture(event.pointerId);
+      });
+      cardinalityTextB.setAttribute('dominant-baseline', 'middle');
+      cardinalityTextB.setAttribute('paint-order', 'stroke');
+      cardinalityTextB.setAttribute('stroke', '#f8fafc');
+      cardinalityTextB.setAttribute('stroke-width', '3');
+      cardinalityTextB.textContent = rel.cardB;
+      drawLink(sourcePoint, { x: relationX, y: relationY });
+      drawLink(targetPoint, { x: relationX, y: relationY });
+      layer.appendChild(cardinalityTextA);
+      layer.appendChild(cardinalityTextB);
+      const relationText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      relationText.setAttribute('x', relationX + (rel.labelOffsetX || 0));
+      relationText.setAttribute('y', relationY - 18 + (rel.labelOffsetY || 0));
+      relationText.setAttribute('text-anchor', 'middle');
+      relationText.setAttribute('fill', '#0f172a');
+      relationText.setAttribute('font-size', '13');
+      relationText.setAttribute('font-weight', '700');
+      relationText.style.cursor = 'grab';
+      relationText.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        const point = getSvgPoint(event);
+        dragState = { type: 'label', target: 'relation', relationship: rel, originX: point.x, originY: point.y };
+        relationText.setPointerCapture(event.pointerId);
+      });
+      relationText.textContent = rel.name;
+      layer.appendChild(relationText);
+    }
+
+    function renderDiagram() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const width = 1500;
+      const height = 980;
+      const padding = 70;
+      const gap = 120;
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      const cols = Math.max(1, Math.min(3, Math.ceil(Math.sqrt(entities.length))));
+      const entityWidth = Math.max(260, Math.min(340, (width - padding * 2 - gap * (cols - 1)) / cols));
+      const entityLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const relationshipLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      svg.appendChild(relationshipLayer);
+      svg.appendChild(entityLayer);
+
+      const rowHeights = [];
+      let cursorY = padding;
+      for (let row = 0; row < Math.ceil(entities.length / cols); row += 1) {
+        const rowEntities = entities.slice(row * cols, row * cols + cols);
+        const rowHeight = Math.max(...rowEntities.map(entity => getEntityDimensions(entity, entityWidth).height)) + 40;
+        rowHeights.push(rowHeight);
+      }
+
+      entities.forEach((entity, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const fallbackX = padding + col * (entityWidth + gap);
+        const fallbackY = cursorY + (rowHeights.slice(0, row).reduce((sum, value) => sum + value, 0)) + 10;
+        const x = entity.layoutLocked && Number.isFinite(entity.x) ? entity.x : fallbackX;
+        const y = entity.layoutLocked && Number.isFinite(entity.y) ? entity.y : fallbackY;
+        const dims = drawEntity(entity, x, y, entityWidth, entityLayer);
+        entity.width = dims.width;
+        entity.height = dims.height;
+      });
+      relationships.forEach(rel => {
+        const source = entities[rel.from];
+        const target = entities[rel.to];
+        if (!source || !target) return;
+        drawRelationship(rel, source, target, relationshipLayer);
+      });
+    }
+
+    addEntityBtn.addEventListener('click', addEntity);
+    addRelationBtn.addEventListener('click', addRelationship);
+    importJavaBtn.addEventListener('click', importJavaCode);
+    resetBtn.addEventListener('click', resetDiagram);
+    renderDiagram();
+  </script>
+</body>
+</html>

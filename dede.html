@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tempo de espera de André Franscelino</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-image: url('https://media.licdn.com/dms/image/v2/D4D03AQFoDkK8k4tCzA/profile-displayphoto-scale_200_200/B4DZu.VSZAJYAY-/0/1768424812293?e=2147483647&v=beta&t=K_kZ-G3ROAGxR-rxUTNcWZcP3V7KnAS5xvV-CFK-Oug');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+        }
+        #clock {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        button {
+            font-size: 18px;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Esperando dede....</h1>
+    <div id="clock">00:00:00</div>
+    <button id="setTimerBtn">Definir Timer</button>
+    <button id="pauseBtn">Pausar/Retomar</button>
+    <button id="resetBtn">Resetar</button>
+    <button id="speedUpBtn">Aumentar Velocidade</button>
+    <button id="speedDownBtn">Diminuir Velocidade</button>
+    
+    <script>
+        let timer;
+        let isRunning = false;
+        let startTime;
+        let elapsedTime = 0;
+        let speed = 1; // multiplicador de velocidade
+        
+        function updateClock() {
+            const now = Date.now();
+            const diff = (now - startTime) * speed + elapsedTime;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            document.getElementById('clock').textContent = 
+                `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+        
+        function startTimer() {
+            if (!isRunning) {
+                startTime = Date.now();
+                timer = setInterval(updateClock, 1000 / speed);
+                isRunning = true;
+            }
+        }
+        
+        function pauseTimer() {
+            if (isRunning) {
+                clearInterval(timer);
+                elapsedTime += (Date.now() - startTime) * speed;
+                isRunning = false;
+            }
+        }
+        
+        function resetTimer() {
+            clearInterval(timer);
+            elapsedTime = 0;
+            speed = 1;
+            document.getElementById('clock').textContent = '00:00:00';
+            isRunning = false;
+            document.getElementById('pauseBtn').textContent = 'Pausar/Retomar';
+        }
+        
+        function increaseSpeed() {
+            speed *= 2;
+            if (isRunning) {
+                clearInterval(timer);
+                timer = setInterval(updateClock, 1000 / speed);
+            }
+        }
+        
+        function decreaseSpeed() {
+            if (speed > 0.5) {
+                speed /= 2;
+                if (isRunning) {
+                    clearInterval(timer);
+                    timer = setInterval(updateClock, 1000 / speed);
+                }
+            }
+        }
+        
+        function setInitialTimer() {
+            const input = prompt('Digite o tempo inicial (HH:MM:SS):', '00:00:00');
+            if (input !== null && input.trim() !== '') {
+                const parts = input.split(':');
+                if (parts.length === 3) {
+                    const hours = parseInt(parts[0]) || 0;
+                    const minutes = parseInt(parts[1]) || 0;
+                    const seconds = parseInt(parts[2]) || 0;
+                    elapsedTime = (hours * 3600000) + (minutes * 60000) + (seconds * 1000);
+                    updateClock();
+                } else {
+                    alert('Formato inválido! Use HH:MM:SS');
+                }
+            }
+        }
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (isRunning) {
+                pauseTimer();
+                document.getElementById('pauseBtn').textContent = 'Retomar';
+            } else {
+                startTimer();
+                document.getElementById('pauseBtn').textContent = 'Pausar';
+            }
+        });
+        
+        document.getElementById('setTimerBtn').addEventListener('click', setInitialTimer);
+        document.getElementById('resetBtn').addEventListener('click', resetTimer);
+        document.getElementById('speedUpBtn').addEventListener('click', increaseSpeed);
+        document.getElementById('speedDownBtn').addEventListener('click', decreaseSpeed);
+    </script>
+</body>
+</html>
