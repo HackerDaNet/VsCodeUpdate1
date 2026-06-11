@@ -63,7 +63,7 @@ console.log(usuarios2);
 usuarios2.sort();
 console.log(usuarios2);
 
-//forEacg
+//forEach
 //percorre o array
 usuarios2.forEach(function(usuario){ //percorre cada item do array e executa a função para cada item
     console.log(usuario); //imprime cada item do array

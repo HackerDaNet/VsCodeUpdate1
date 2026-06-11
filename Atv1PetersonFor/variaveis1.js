@@ -5,6 +5,8 @@ console.log(usuario);
 usuario.push("Gabriel");
 console.log(usuario);
 
+usuario.unshift("Patricia")
+console.log(usuario);
 
 usuario.splice(0, 0);
 console.log(usuario);
@@ -20,3 +22,8 @@ console.log(usuario.indexOf("Fernanda"));
 usuario.shift("Gabriel");
 console.log(usuario);
 
+usuario.pop();
+console.log(usuario);
+
+let nomes = usuario.join(" - ")
+console.log(nomes);
